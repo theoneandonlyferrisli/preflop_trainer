@@ -11,6 +11,13 @@ import ListItemText from '@mui/material/ListItemText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+
+import Typography from '@mui/material/Typography';
+
 import './App.css';
 
 /* Roboto fonts */
@@ -42,73 +49,96 @@ function Game() {
     return (
         <Container className='game'>
             {console.log('message: ' + gameState.message + '; pos: ' + gameState.playerPosition + '; hand: ' + gameState.hand)}
-            <h1> Welcome to Preflop Trainer v0.1.1! </h1>
-            <p> Your position: <strong>{gameState.playerPosition}</strong> </p>
-            <p> Your hand: <strong>{gameState.hand}</strong> </p>
-            <p> Your Actions: </p>
-            <Container>
-                <ButtonGroup variant="outlined" aria-label="outlined button group">
-                    <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
-                        setGameState(
-                            (currentState) => {
-                                return {
-                                    playerPosition: currentState.playerPosition,
-                                    hand: currentState.hand,
-                                    message: 'Congrats! You won by calling! :)',
-                                    actionButtonsDisabled: true,
-                                };
-                            }
-                        );
-                    }}>Call</Button>
-                    <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
-                        setGameState(
-                            (currentState) => {
-                                return {
-                                    playerPosition: currentState.playerPosition,
-                                    hand: currentState.hand,
-                                    message: 'Congrats! You won by folding! :)',
-                                    actionButtonsDisabled: true,
-                                };
-                            }
-                        );
-                    }}>Fold</Button>
-                    <RaiseAction
-                        betSizes={['3BB', '6BB', '9BB', 'All-in']}
-                        isDisabled={gameState.actionButtonsDisabled}
-                        gameStateSetter={setGameState}
-                    />
-                    {/*<Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
-                        setGameState(
-                            (currentState) => {
-                                return {
-                                    playerPosition: currentState.playerPosition,
-                                    hand: currentState.hand,
-                                    message: 'Congrats! You won by raising! :)',
-                                    actionButtonsDisabled: true,
-                                };
-                            }
-                        );
-                    }}>Raise</Button>*/}
-                </ButtonGroup>
-            </Container>
+            <Card sx={{ maxWidth:1500 }}>
+                <Typography gutterBottom variant='h2' component='div'>
+                    Welcome to Preflop Trainer v0.0.1!
+                </Typography>
+                <br />
+                <CardMedia
+                    component="img"
+                    height="680"
+                    image="fullring-table-poker-positions.png"
+                    alt="poker-table"
+                />
+                <br />
+                <Typography gutterBottom variant='h4' component='div'>
+                    Your position: <strong>{gameState.playerPosition}</strong>
+                </Typography>
+                <br />
+                <Typography gutterBottom variant='h4' component='div'>
+                    Your hand: <strong>{gameState.hand}</strong>
+                </Typography>
+                <br />
+                <Typography gutterBottom variant='h4' component='div'>
+                    Your Actions:
+                </Typography>
+                <CardActions>
+                    <Container>
+                        <ButtonGroup variant="outlined" aria-label="outlined button group">
+                            <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
+                                setGameState(
+                                    (currentState) => {
+                                        return {
+                                            playerPosition: currentState.playerPosition,
+                                            hand: currentState.hand,
+                                            message: 'Congrats! You won by calling! :)',
+                                            actionButtonsDisabled: true,
+                                        };
+                                    }
+                                );
+                            }}>Call</Button>
+                            <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
+                                setGameState(
+                                    (currentState) => {
+                                        return {
+                                            playerPosition: currentState.playerPosition,
+                                            hand: currentState.hand,
+                                            message: 'Congrats! You won by folding! :)',
+                                            actionButtonsDisabled: true,
+                                        };
+                                    }
+                                );
+                            }}>Fold</Button>
+                            <RaiseAction
+                                betSizes={['3BB', '6BB', '9BB', 'All-in']}
+                                isDisabled={gameState.actionButtonsDisabled}
+                                gameStateSetter={setGameState}
+                            />
+                            {/*<Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
+                                setGameState(
+                                    (currentState) => {
+                                        return {
+                                            playerPosition: currentState.playerPosition,
+                                            hand: currentState.hand,
+                                            message: 'Congrats! You won by raising! :)',
+                                            actionButtonsDisabled: true,
+                                        };
+                                    }
+                                );
+                            }}>Raise</Button>*/}
+                        </ButtonGroup>
+                    </Container>
+                </CardActions>
+                <br />
+                <br />
+                <Container>
+                    <Fab variant='extended' size='large' color='primary' onClick={() => {
+                        setGameState({
+                            playerPosition: getRandomPosition(),
+                            hand: getRandomHand(),
+                            message: '',
+                        });
+                    }}>
+                        Restart Game
+                    </Fab>
+                </Container>
+                <br />
+                <br />
+                <Container>
+                    <GameMessage message={gameState.message} />
+                </Container>
+            </Card>
             <br />
-            <br />
-            <Container>
-                <Fab variant='extended' size='large' color='primary' onClick={() => {
-                    setGameState({
-                        playerPosition: getRandomPosition(),
-                        hand: getRandomHand(),
-                        message: '',
-                    });
-                }}>
-                    Restart Game
-                </Fab>
-            </Container>
-            <br />
-            <br />
-            <Container>
-                <GameMessage message={gameState.message} />
-            </Container>
         </Container>
     );
 }
