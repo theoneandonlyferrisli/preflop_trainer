@@ -4,9 +4,13 @@ import './index.css';
 import App from './components/app/App';
 import reportWebVitals from './reportWebVitals';
 
+import { Container } from '@mui/material';
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Container maxWidth='xl'>
+        <App />
+    </Container>
   </React.StrictMode>,
   document.getElementById('root')
 );
