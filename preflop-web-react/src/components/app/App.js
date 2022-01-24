@@ -3,7 +3,7 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import { Container } from '@mui/material';
 import Fab from '@mui/material/Fab';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -16,6 +16,10 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 
+import Box from '@mui/material/Box';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+
 import Typography from '@mui/material/Typography';
 
 import './App.css';
@@ -26,6 +30,12 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
+/* Icons */
+import FolderIcon from '@mui/icons-material/Folder';
+import RestoreIcon from '@mui/icons-material/Restore';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+
 const positions = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
 const hands = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const suited = ['Suited', 'Off-suit'];
@@ -35,7 +45,53 @@ const getRandomPosition = () => getRandomItemFromList(positions);
 const getRandomHand = () => getRandomItemFromList(suited) + ' ' + getRandomItemFromList(hands) + ' and ' + getRandomItemFromList(hands);
 
 export default function App() {
-    return <Game />;
+
+    return (
+        <MainUiHolder />
+    );
+}
+
+function MainUiHolder() {
+    const [value, setValue] = useState(0);
+    const [currentUI, setCurrentUI] = useState(<Game />);    // Default to game page
+
+    useEffect(() => {
+        if (value === 0) {
+            setCurrentUI(<Game />);
+            console.log("Set UI to <Game />!");
+        } else if (value === 1) {
+            setCurrentUI(<HistoricalTrends />);
+            console.log("Set UI to Historical!");
+        } else {
+            setCurrentUI(<Settings />);
+            console.log("Set UI to Settings!");
+        }
+    }, [value]);
+
+    return (
+        <Container className="game">
+            <Typography gutterBottom variant='h2' component='div'>
+                Welcome to Preflop Trainer v0.0.1!
+            </Typography>
+            <br />
+            <br />
+            {currentUI}
+            <br />
+            <br />
+            <Box>
+                <BottomNavigation
+                    showLabels
+                    value={value}
+                    onChange={(event, newValue) => {
+                        setValue(newValue);
+                }}>
+                    <BottomNavigationAction label="Training" />
+                    <BottomNavigationAction label="My Trends" />
+                    <BottomNavigationAction label="Settings" />
+                </BottomNavigation>
+            </Box>
+        </Container>
+    );
 }
 
 function Game() {
@@ -50,10 +106,6 @@ function Game() {
         <Container className='game'>
             {console.log('message: ' + gameState.message + '; pos: ' + gameState.playerPosition + '; hand: ' + gameState.hand)}
             <Card sx={{ maxWidth:1500 }}>
-                <Typography gutterBottom variant='h2' component='div'>
-                    Welcome to Preflop Trainer v0.0.1!
-                </Typography>
-                <br />
                 <CardMedia
                     component="img"
                     height="680"
@@ -104,18 +156,6 @@ function Game() {
                                 isDisabled={gameState.actionButtonsDisabled}
                                 gameStateSetter={setGameState}
                             />
-                            {/*<Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
-                                setGameState(
-                                    (currentState) => {
-                                        return {
-                                            playerPosition: currentState.playerPosition,
-                                            hand: currentState.hand,
-                                            message: 'Congrats! You won by raising! :)',
-                                            actionButtonsDisabled: true,
-                                        };
-                                    }
-                                );
-                            }}>Raise</Button>*/}
                         </ButtonGroup>
                     </Container>
                 </CardActions>
@@ -227,5 +267,21 @@ function RaiseAction({ betSizes, isDisabled, gameStateSetter }) {
             betSizes={betSizes}
         />
         </div>
+    );
+}
+
+function HistoricalTrends() {
+    return (
+        <Typography gutterBottom variant='h4' component='div'>
+            {"This is user's historical trend data. Probably some fancy charts here."}
+        </Typography>
+    );
+}
+
+function Settings() {
+    return (
+        <Typography gutterBottom variant='h4' component='div'>
+            {"This is the app setting page where the user will be able to configure how they'd like to play the game."}
+        </Typography>
     );
 }
