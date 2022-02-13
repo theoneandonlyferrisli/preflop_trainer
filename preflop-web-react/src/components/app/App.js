@@ -37,12 +37,49 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const positions = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
-const hands = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const hands = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+const handsVal = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14};
 const suited = ['Suited', 'Off-suit'];
+const suit_unicode_mapping = {'heart':'\u2665', 'diamond':'\u2666', 'club':'\u2663', 'spade':'\u2660'};
+const suits = ['heart', 'diamond', 'club', 'spade'];
 
 const getRandomItemFromList = (items) => items[Math.floor(Math.random() * items.length)];
 const getRandomPosition = () => getRandomItemFromList(positions);
-const getRandomHand = () => getRandomItemFromList(suited) + ' ' + getRandomItemFromList(hands) + ' and ' + getRandomItemFromList(hands);
+const getRandomHand = () => suit_unicode_mapping[getRandomItemFromList(suits)] + getRandomItemFromList(hands) + ' ' + suit_unicode_mapping[getRandomItemFromList(suits)] + getRandomItemFromList(hands);
+const getHandAdviceKey = (handString) => {
+    let hands = handString.split(' ');
+    let suit1 = hands[0][0];
+    let suit2 = hands[1][0];
+    let hand1 = hands[0][1];
+    let hand2 = hands[1][1];
+
+    /*
+    console.log('hand1: ' + hand1);
+    console.log('hand2: ' + hand2);
+    console.log('suit1: ' + suit1);
+    console.log('suit2: ' + suit2);
+    console.log('index 1 : ' + handsVal[hand1]);
+    console.log('index 2 : ' + handsVal[hand2]);
+    */
+
+    if (handsVal[hand1] < handsVal[hand2]) {
+        let tempHand = hand1;
+        hand1 = hand2;
+        hand2 = tempHand;
+
+        let tempSuit = suit1;
+        suit1 = suit2;
+        suit2 = tempSuit;
+    }
+
+    if (hand1 === hand2) {
+        return hand1 + hand2;
+    } else if (suit1 === suit2) {
+        return hand1 + hand2 + 's';
+    } else {
+        return hand1 + hand2 + 'o';
+    }
+};
 
 export default function App() {
 
@@ -71,7 +108,7 @@ function MainUiHolder() {
     return (
         <Container className="game">
             <Typography gutterBottom variant='h2' component='div'>
-                Welcome to Preflop Trainer v0.0.1!
+                Welcome to Preflop Trainer v0.0.1! &hearts;&diams;&spades;&clubs;
             </Typography>
             <br />
             <br />
@@ -102,6 +139,51 @@ function Game() {
         actionButtonsDisabled: false,
     });
 
+    const [advice, setAdvice] = useState({});
+
+    useEffect(() => {
+        const fetchAdviceFromFile = async () => {
+            let response = await fetch('RFI_100bb.csv');
+            let data = await response.text();
+            let lines = data.split(/(?:\r\n|\n)+/);
+            let res = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                let line = lines[i];
+                let tokens = line.split(',');
+                let key = tokens[1];
+                let attributes = {};
+
+                attributes['marginal'] = tokens[3];
+                attributes['UTG'] = tokens[7];
+                attributes['HJ'] = tokens[8];
+                attributes['CO'] = tokens[9];
+                attributes['BTN'] = tokens[10];
+
+                // BB SB default action: fold
+                attributes['BB'] = 'CALL';
+                attributes['SB'] = 'CALL';
+
+                attributes['UTG_advice'] = tokens[11];
+                attributes['HJ_advice'] = tokens[12];
+                attributes['CO_advice'] = tokens[13];
+                attributes['BTN_advice'] = tokens[14];
+
+                // BB SB default advice: check
+                attributes['BB_advice'] = 'Call (Check) since you are BB';
+                attributes['SB_advice'] = 'Call (Check) since you are SB';
+
+                res[key] = attributes;
+            }
+
+            setAdvice(res);
+            console.log('Set advice state in Game');
+        };
+
+        // this will lead to synchronization issues if advice is referenced before parsing completes
+        fetchAdviceFromFile();
+    }, []);
+
     return (
         <Container className='game'>
             {console.log('message: ' + gameState.message + '; pos: ' + gameState.playerPosition + '; hand: ' + gameState.hand)}
@@ -118,7 +200,7 @@ function Game() {
                 </Typography>
                 <br />
                 <Typography gutterBottom variant='h4' component='div'>
-                    Your hand: <strong>{gameState.hand}</strong>
+                    Your hand: <strong>{gameState.hand}</strong> ({getHandAdviceKey(gameState.hand)})
                 </Typography>
                 <br />
                 <Typography gutterBottom variant='h4' component='div'>
@@ -130,10 +212,15 @@ function Game() {
                             <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
                                 setGameState(
                                     (currentState) => {
+                                        let handAdviceKey = getHandAdviceKey(currentState.hand);
+                                        let adviceAttributeKey = currentState.playerPosition + '_advice';
+                                        let action = advice[handAdviceKey][currentState.playerPosition];
+                                        let posAdvice = advice[handAdviceKey][adviceAttributeKey];
+
                                         return {
                                             playerPosition: currentState.playerPosition,
                                             hand: currentState.hand,
-                                            message: 'Congrats! You won by calling! :)',
+                                            message: 'Your action: CALL; Expected action: ' + action + '. ' + posAdvice,
                                             actionButtonsDisabled: true,
                                         };
                                     }
@@ -142,10 +229,15 @@ function Game() {
                             <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
                                 setGameState(
                                     (currentState) => {
+                                        let handAdviceKey = getHandAdviceKey(currentState.hand);
+                                        let adviceAttributeKey = currentState.playerPosition + '_advice';
+                                        let action = advice[handAdviceKey][currentState.playerPosition];
+                                        let posAdvice = advice[handAdviceKey][adviceAttributeKey];
+
                                         return {
                                             playerPosition: currentState.playerPosition,
                                             hand: currentState.hand,
-                                            message: 'Congrats! You won by folding! :)',
+                                            message: 'Your action: FOLD; Expected action: ' + action + '. ' + posAdvice,
                                             actionButtonsDisabled: true,
                                         };
                                     }
@@ -155,7 +247,25 @@ function Game() {
                                 betSizes={['3BB', '6BB', '9BB', 'All-in']}
                                 isDisabled={gameState.actionButtonsDisabled}
                                 gameStateSetter={setGameState}
+                                gameAdvice={advice}
                             />
+                            <Button variant='outlined' size='large' disabled={gameState.actionButtonsDisabled} onClick={() => {
+                                setGameState(
+                                    (currentState) => {
+                                        let handAdviceKey = getHandAdviceKey(currentState.hand);
+                                        let adviceAttributeKey = currentState.playerPosition + '_advice';
+                                        let action = advice[handAdviceKey][currentState.playerPosition];
+                                        let posAdvice = advice[handAdviceKey][adviceAttributeKey];
+
+                                        return {
+                                            playerPosition: currentState.playerPosition,
+                                            hand: currentState.hand,
+                                            message: 'Your action: MIXED; Expected action: ' + action + '. ' + posAdvice,
+                                            actionButtonsDisabled: true,
+                                        };
+                                    }
+                                );
+                            }}>Mixed</Button>
                         </ButtonGroup>
                     </Container>
                 </CardActions>
@@ -186,11 +296,17 @@ function Game() {
 function GameMessage({message}) {
     console.log("Message received by GameMessage: " + message);
     if (message) {
-        return (
-            <Alert severity='success'>
-                <strong>{message}</strong>
-            </Alert>
-        );
+
+            return (
+                <Alert severity='success'>
+                    <strong>{message}</strong>
+                </Alert>
+            );
+            /*return (
+                <Alert severity='error'>
+                    <strong>{message}</strong>
+                </Alert>
+            );*/
     } else {
         return <div></div>;
     }
@@ -221,7 +337,7 @@ function RaiseActionDialog(props) {
     );
 }
 
-function RaiseAction({ betSizes, isDisabled, gameStateSetter }) {
+function RaiseAction({ betSizes, isDisabled, gameStateSetter, gameAdvice }) {
     const [open, setOpen] = useState(false);
     const [selectedValue, setSelectedValue] = useState(betSizes[0]);
 
@@ -234,10 +350,15 @@ function RaiseAction({ betSizes, isDisabled, gameStateSetter }) {
         setSelectedValue(value);
         gameStateSetter(
             (currentState) => {
+                let handAdviceKey = getHandAdviceKey(currentState.hand);
+                let adviceAttributeKey = currentState.playerPosition + '_advice';
+                let action = gameAdvice[handAdviceKey][currentState.playerPosition];
+                let posAdvice = gameAdvice[handAdviceKey][adviceAttributeKey];
+
                 return {
                     playerPosition: currentState.playerPosition,
                     hand: currentState.hand,
-                    message: 'Congrats! You won by raising ' + value + '! :)',
+                    message: 'Your action: RAISE (' + value + '); Expected action: ' + action + '. ' + posAdvice,
                     actionButtonsDisable: true,
                 };
             }
@@ -284,4 +405,11 @@ function Settings() {
             {"This is the app setting page where the user will be able to configure how they'd like to play the game."}
         </Typography>
     );
+}
+
+async function ReadAdviceFromFile(filePath) {
+    let response = await fetch('RFI_100bb.csv');
+    let data = await response.text();
+
+    return data;
 }
